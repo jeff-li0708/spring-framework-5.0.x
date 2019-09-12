@@ -16,19 +16,19 @@
 
 package org.springframework.web;
 
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.lang.Nullable;
+import org.springframework.util.ReflectionUtils;
+
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.HandlesTypes;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.HandlesTypes;
-
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
-import org.springframework.lang.Nullable;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Servlet 3.0 {@link ServletContainerInitializer} designed to support code-based
@@ -97,6 +97,7 @@ import org.springframework.util.ReflectionUtils;
  * <p>This class is neither designed for extension nor intended to be extended.
  * It should be considered an internal type, with {@code WebApplicationInitializer}
  * being the public-facing SPI.
+ * <p>该类既不是为扩展而设计的，也不打算被扩展。</p>
  *
  * <h2>See Also</h2>
  * See {@link WebApplicationInitializer} Javadoc for examples and detailed usage
@@ -108,6 +109,10 @@ import org.springframework.util.ReflectionUtils;
  * @since 3.1
  * @see #onStartup(Set, ServletContext)
  * @see WebApplicationInitializer
+ *
+ * ServletContainerInitializer是tomcat的接口，利用SPI技术，在tomcat启动时,会获取实现了ServletContainerInitializer接口
+ * 并且在配置文件(resources\META-INF\services\javax.servlet.ServletContainerInitializer)中配置的类对象,
+ * 然后依次调用其onStartup方法，其中参数为实现了WebApplicationInitializer的类
  */
 @HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
