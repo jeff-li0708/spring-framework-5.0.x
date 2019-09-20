@@ -16,26 +16,8 @@
 
 package org.springframework.web.servlet;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -59,6 +41,13 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Central dispatcher for HTTP request handlers/controllers, e.g. for web UI controllers
@@ -153,6 +142,9 @@ import org.springframework.web.util.WebUtils;
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
+ *
+ * SpringMVC的核心类，springMVC中的前端控制器(front controller),负责接收request并将request转发给对应的处理组件.
+ *
  */
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
@@ -484,6 +476,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 	/**
 	 * This implementation calls {@link #initStrategies}.
+	 *
+	 * 为啥项目启动时没有调用此方法,而是在第一次请求时才调用????
 	 */
 	@Override
 	protected void onRefresh(ApplicationContext context) {
@@ -495,9 +489,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
 	protected void initStrategies(ApplicationContext context) {
-		initMultipartResolver(context);
+		initMultipartResolver(context); //设置一个处理文件的对象
 		initLocaleResolver(context);
-		initThemeResolver(context);
+		initThemeResolver(context); //设置处理请求时所使用的策略对象
 		initHandlerMappings(context);
 		initHandlerAdapters(context);
 		initHandlerExceptionResolvers(context);
@@ -510,6 +504,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the MultipartResolver used by this class.
 	 * <p>If no bean is defined with the given name in the BeanFactory for this namespace,
 	 * no multipart handling is provided.
+	 *
+	 * 初始设置一个处理文件的对象
 	 */
 	private void initMultipartResolver(ApplicationContext context) {
 		try {
