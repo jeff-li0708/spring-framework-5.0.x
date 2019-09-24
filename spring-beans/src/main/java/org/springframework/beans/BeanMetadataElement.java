@@ -24,6 +24,8 @@ import org.springframework.lang.Nullable;
  *
  * @author Juergen Hoeller
  * @since 2.0
+ *
+ * bean元数据，返回该bean的来源。
  */
 public interface BeanMetadataElement {
 

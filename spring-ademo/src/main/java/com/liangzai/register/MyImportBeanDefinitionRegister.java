@@ -1,5 +1,6 @@
 package com.liangzai.register;
 
+import com.liangzai.dao.UserDao;
 import com.liangzai.factory.MyFactoryBean;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -37,7 +38,8 @@ public class MyImportBeanDefinitionRegister implements ImportBeanDefinitionRegis
 				BeanDefinitionBuilder.genericBeanDefinition(MyFactoryBean.class); //手动注册一个BeanDefinition到Spring容器中,这里注册的是MyFactoryBean
 
 		GenericBeanDefinition beanDefinition = (GenericBeanDefinition) beanDefinitionBuilder.getBeanDefinition();
-		beanDefinition.getConstructorArgumentValues().addGenericArgumentValue("com.liangzai.dao.UserDao"); //设置MyFactoryBean.mappingInterface
+		beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(UserDao.class); //设置MyFactoryBean.mappingInterface
+		beanDefinition.getConstructorArgumentValues().addGenericArgumentValue("com.liangzai.dao.UserDao");
 
 		//让FactoryBean生效
 		registry.registerBeanDefinition("userDao",beanDefinition); //这里注册的是BeanDefinition的beanClass是MyFactoryBean，BeanDefinitionMap的key为userDao

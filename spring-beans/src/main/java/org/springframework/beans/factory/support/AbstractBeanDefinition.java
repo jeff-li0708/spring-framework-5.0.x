@@ -16,14 +16,6 @@
 
 package org.springframework.beans.factory.support;
 
-import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
-
 import org.springframework.beans.BeanMetadataAttributeAccessor;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -36,6 +28,10 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Constructor;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Base class for concrete, full-fledged {@link BeanDefinition} classes,
@@ -53,6 +49,9 @@ import org.springframework.util.StringUtils;
  * @see GenericBeanDefinition
  * @see RootBeanDefinition
  * @see ChildBeanDefinition
+ *
+ * 这个是BeanDefinition的实现类的基类,封装了GenericBeanDefinition、RootBeanDefinition
+ * 和ChildBeanDefinition类的公共属性
  */
 @SuppressWarnings("serial")
 public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor
@@ -62,7 +61,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
 	 * status unless overridden from a parent bean definition (if applicable).
 	 */
-	public static final String SCOPE_DEFAULT = "";
+	public static final String SCOPE_DEFAULT = "";  //bean的作用范围-默认是singleton
 
 	/**
 	 * Constant that indicates no external autowiring at all.
@@ -138,14 +137,23 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 
 	@Nullable
-	private volatile Object beanClass;
+	private volatile Object beanClass;  //这个很重要,定义的是该BeanDefinition对应的Class
 
+	/**
+	 * bean的作用范围：
+	 * 1.singleton 	单例
+	 * 2.prototype 	任意个实例
+	 * 3.request 	将单个bean定义的范围限定为单个HTTP请求的生命周期;也就是说，每个HTTP请求一个实例
+	 * 4.session	将单个bean定义的范围限定为HTTP会话的生命周期
+	 * 5.application将单个bean定义的范围限定为ServletContext的生命周期
+	 * 6.websocket	将单个bean定义的范围限定为WebSocket的生命周期。仅在web-的上下文中有效
+	 */
 	@Nullable
-	private String scope = SCOPE_DEFAULT;
+	private String scope = SCOPE_DEFAULT; //bean的作用范围-默认是singleton
 
 	private boolean abstractFlag = false;
 
-	private boolean lazyInit = false;
+	private boolean lazyInit = false; //延迟加载-默认false
 
 	private int autowireMode = AUTOWIRE_NO;
 
@@ -174,7 +182,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private String factoryMethodName;
 
 	@Nullable
-	private ConstructorArgumentValues constructorArgumentValues;
+	private ConstructorArgumentValues constructorArgumentValues; //构造方法的参数值
 
 	@Nullable
 	private MutablePropertyValues propertyValues;
@@ -183,7 +191,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private MethodOverrides methodOverrides;
 
 	@Nullable
-	private String initMethodName;
+	private String initMethodName; //初始方法
 
 	@Nullable
 	private String destroyMethodName;

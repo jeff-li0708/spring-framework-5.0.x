@@ -1,0 +1,7 @@
+1.BeanDefinition -- java bean在Spring中的描述类,它有三个实现类，分别是RootBeanDefinition、ChildBeanDefinitio、
+GenericDefinition,他们都继承AbstractBeanDefinition,下面会详细介绍他们的作用和区别
+
+AbstractBeanDefinition提取了所有子类的公共属性和方法
+
+
+

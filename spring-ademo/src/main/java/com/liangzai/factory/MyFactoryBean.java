@@ -15,12 +15,21 @@ import java.lang.reflect.Proxy;
 public class MyFactoryBean implements FactoryBean {
 
 	Class mappingInterface; //需要代理的类
+	String c2;
 
 	public MyFactoryBean() {
 	}
 
 	public MyFactoryBean(Class mappingInterface) {
 		this.mappingInterface = mappingInterface;
+	}
+	public MyFactoryBean(String c2) {
+		this.c2 = c2;
+	}
+
+	public MyFactoryBean(Class mappingInterface, String c2) {
+		this.mappingInterface = mappingInterface;
+		this.c2 = c2;
 	}
 
 	/**
