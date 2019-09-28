@@ -9,3 +9,8 @@ Spring主要的是在应用中提供基础支持。Spring关注与为企业应�
 
 特征
 核心技术：依赖注入、组件、 resources、 i18n、 校验、 数据绑定、 类型转换、 SpEL、 AOP
+测试    ：mock objects, TestContext framework, Spring MVC Test, WebTestClient
+数据通道：事务，支持DAO，JDBC, ORM, Marshalling XML
+Web 框架：Spring MVC 和 Spring WebFlux
+集合    ：远程连接，JMS，JCA，email，任务，定时器，缓存
+语言    ： Kotlin, Groovy, dynamic languages
