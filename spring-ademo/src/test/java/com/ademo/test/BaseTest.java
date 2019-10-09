@@ -15,11 +15,13 @@ public class BaseTest {
 
 		//通过Java代码方式创建应用上下文
 		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(); //
+		//注册一个或多个带注解的类
 		applicationContext.register(AppConfig.class);
+
 		applicationContext.refresh();
 
 		//获取通过注解Bean注册的对象
-		User user = (User) applicationContext.getBean("user");//首次调用getBean才会创建对象
+		User user = (User) applicationContext.getBean("user");
 		System.out.println(user.getName());
 
 		//获取接口对象

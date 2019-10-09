@@ -155,16 +155,16 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean lazyInit = false; //延迟加载-默认false
 
-	private int autowireMode = AUTOWIRE_NO;
+	private int autowireMode = AUTOWIRE_NO; //自动注入模式
 
-	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
+	private int dependencyCheck = DEPENDENCY_CHECK_NONE; //依赖检测
 
 	@Nullable
-	private String[] dependsOn;
+	private String[] dependsOn; //用来表示一个bean的实例化依靠另外一个bean的先实例化
 
 	private boolean autowireCandidate = true;
 
-	private boolean primary = false;
+	private boolean primary = false; //是否是首要类（在注入时优先使用primary类）,xml bean中对应primary属性，注解中对应@Primary注解
 
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
 
@@ -185,24 +185,24 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	private ConstructorArgumentValues constructorArgumentValues; //构造方法的参数值
 
 	@Nullable
-	private MutablePropertyValues propertyValues;
+	private MutablePropertyValues propertyValues; //普通属性集合
 
 	@Nullable
-	private MethodOverrides methodOverrides;
+	private MethodOverrides methodOverrides; //方法重写的持有者 xml中对应lookup-method和replaced-method属性
 
 	@Nullable
 	private String initMethodName; //初始方法
 
 	@Nullable
-	private String destroyMethodName;
+	private String destroyMethodName; //销毁方法
 
-	private boolean enforceInitMethod = true;
+	private boolean enforceInitMethod = true;  //是否执行init-method
 
-	private boolean enforceDestroyMethod = true;
+	private boolean enforceDestroyMethod = true;  //是否执行销毁方法
 
-	private boolean synthetic = false;
+	private boolean synthetic = false;  //是否是用户定义的而不是应用程序本身定义的
 
-	private int role = BeanDefinition.ROLE_APPLICATION;
+	private int role = BeanDefinition.ROLE_APPLICATION;  //定义这个bean的应用，APPLICATION:用户； INFRASTRUCTURE:完全内部使用，与用户无关；SUPPORT:某些复杂配置的一部分
 
 	@Nullable
 	private String description;

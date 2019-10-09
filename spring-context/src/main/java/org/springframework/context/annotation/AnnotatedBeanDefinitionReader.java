@@ -16,9 +16,6 @@
 
 package org.springframework.context.annotation;
 
-import java.lang.annotation.Annotation;
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
@@ -32,6 +29,9 @@ import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.lang.annotation.Annotation;
+import java.util.function.Supplier;
 
 /**
  * Convenient adapter for programmatic registration of annotated bean classes.
@@ -213,17 +213,18 @@ public class AnnotatedBeanDefinitionReader {
 	<T> void doRegisterBean(Class<T> annotatedClass, @Nullable Supplier<T> instanceSupplier, @Nullable String name,
 			@Nullable Class<? extends Annotation>[] qualifiers, BeanDefinitionCustomizer... definitionCustomizers) {
 
-		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass);
-		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
+		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass); //创建一个带注解的通用beanDefinition,设置beanClass和注解元数据信息
+		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) { //根据@Conditional注解判断是否跳过,没有这个注解不跳过
 			return;
 		}
 
+		//设置实例供应商
 		abd.setInstanceSupplier(instanceSupplier);
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
-		abd.setScope(scopeMetadata.getScopeName());
-		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
+		abd.setScope(scopeMetadata.getScopeName());//根据bean作用域的注解设置bean的作用范围，默认是singleton
+		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));//获取beanName,优先获取注解配置的名称，没有则取类型的首字母小写的名称
 
-		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);//处理一些公共的注解Lazy、Primary、DependsOn、Role、Description
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				if (Primary.class == qualifier) {
@@ -241,7 +242,8 @@ public class AnnotatedBeanDefinitionReader {
 			customizer.customize(abd);
 		}
 
-		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);//创建一个beanDefinitionHolder实例
+		//根据scopeMetadata中的scopedProxyMode判断是否注册一个代理类（非NO则注册，并返回一个新的holder,否则返回原holder）
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
