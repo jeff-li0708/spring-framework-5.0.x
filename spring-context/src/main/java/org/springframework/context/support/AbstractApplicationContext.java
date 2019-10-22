@@ -16,21 +16,8 @@
 
 package org.springframework.context.support;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.CachedIntrospectionResults;
 import org.springframework.beans.factory.BeanFactory;
@@ -39,38 +26,15 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.support.ResourceEditorRegistrar;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.EmbeddedValueResolverAware;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.context.HierarchicalMessageSource;
-import org.springframework.context.LifecycleProcessor;
-import org.springframework.context.MessageSource;
-import org.springframework.context.MessageSourceAware;
-import org.springframework.context.MessageSourceResolvable;
-import org.springframework.context.NoSuchMessageException;
-import org.springframework.context.PayloadApplicationEvent;
-import org.springframework.context.ResourceLoaderAware;
-import org.springframework.context.event.ApplicationEventMulticaster;
-import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStartedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
-import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.context.*;
+import org.springframework.context.event.*;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.context.weaving.LoadTimeWeaverAware;
 import org.springframework.context.weaving.LoadTimeWeaverAwareProcessor;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.env.*;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -80,6 +44,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract implementation of the {@link org.springframework.context.ApplicationContext}
@@ -618,8 +587,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
-		// 验证所有标志了required的属性是不是可以解析
-		// see ConfigurablePropertyResolver#setRequiredProperties
+		/**
+		 * 验证所有标志了required的属性是不是可以解析
+		 * @see ConfigurablePropertyResolver#setRequiredProperties(java.lang.String...)
+		 *
+		 * 验证当前环境变量的必填属性，如果设置了必填属性而未设置值，则抛出异常
+		 * @see AbstractPropertyResolver#validateRequiredProperties()
+		 */
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
@@ -653,10 +627,17 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Tell the subclass to refresh the internal bean factory.
 	 * @return the fresh BeanFactory instance 刷新后的BeanFactory
-	 * @see #refreshBeanFactory() 刷新BeanFactory
+	 * @see #refreshBeanFactory() 刷新BeanFactory 设置beanFactory的serializationId等
 	 * @see #getBeanFactory() 获取BeanFactory
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		/**
+		 * 抽象方法，让子类自己去实现
+		 * 例如GenericApplicationContext中是设置已存在的beanFactory实例的serializationId
+		 * @see org.springframework.context.support.GenericApplicationContext#refreshBeanFactory()
+		 * AbstractRefreshableApplicationContext中会销毁原有的beanFactory实例，重新创建一个beanFactory实例，设置serializationId，加载并注册beanDefinition等
+		 * @see AbstractRefreshableApplicationContext#refreshBeanFactory()
+		 */
 		refreshBeanFactory();
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		if (logger.isDebugEnabled()) {
@@ -675,12 +656,22 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
+		//设置类加载器-这里设置为当前类的classLoader
 		beanFactory.setBeanClassLoader(getClassLoader());
+		//注册SpEL表达式的解析器,spring3增加了表达式语言的支持，默认可以使用#{bean.xxx}的形式来调用相关属性值。
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+		//注册属性编辑器,属性编辑器实际上是属性的类型转换器，因为bean的属性配置都是字符串类型的 实例化的时候要将这些属性转换为实际类型
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		/**
+		 * 添加后置处理器，在bean初始化之前和bean初始化之后前置处理方法和后置处理方法
+		 * 例如ApplicationContextAwareProcessor中，前置方法会为Aware实现类对象设置
+		 * EnvironmentAware,EmbeddedValueResolverAware,ResourceLoaderAware,ApplicationEventPublisherAware,MessageSourceAware,ApplicationContextAware等参数信息,
+		 * @see ApplicationContextAwareProcessor#invokeAwareInterfaces(java.lang.Object)
+		 */
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+		//设置在自动装配时需要忽略注入的接口
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -690,15 +681,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
+		//设置几个自动装配的特殊规则
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		/**
+		 * 添加BeanPostProcessor(后置处理器)：ApplicationListenerDetector
+		 * 在Bean初始化后检查是否实现了ApplicationListener接口并且是单例，
+		 * 是则加入当前的applicationContext的applicationListeners列表
+		 * @see ApplicationListenerDetector#postProcessAfterInitialization(java.lang.Object, java.lang.String)
+		 */
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
+		//检测是否包含名称为loadTimeWeaver的bean，实际上是增加Aspectj的支持，AspectJ采用编译期织入、类加载期织入两种方式进行切面的织入，类加载期织入简称为LTW（Load Time Weaving）,通过特殊的类加载器来代理JVM默认的类加载器实现
 		if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
 			// Set a temporary ClassLoader for type matching.
@@ -706,6 +705,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Register default environment beans.
+		// 注册环境变量对象到单例对象的缓存池
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}
@@ -910,6 +910,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
 		// 初始化此上下文转换服务
+		//查找是否有beanName为conversionService并且是接口ConversionService的实现类的bean，如果有，设置进beanFactory,例如我们可以实现一个类完成对Date类型的属性进行转换
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(

@@ -200,7 +200,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean enforceDestroyMethod = true;  //是否执行销毁方法
 
-	private boolean synthetic = false;  //是否是用户定义的而不是应用程序本身定义的
+	//是否是合成类（是不是应用自定义的，例如生成AOP代理时，会用到某些辅助类，这些辅助类不是应用自定义的，这个就是合成类）
+	//创建AOP时候为true
+	private boolean synthetic = false;  //是否是用户定义的而不是应用程序本身定义的，
 
 	private int role = BeanDefinition.ROLE_APPLICATION;  //定义这个bean的应用，APPLICATION:用户； INFRASTRUCTURE:完全内部使用，与用户无关；SUPPORT:某些复杂配置的一部分
 
