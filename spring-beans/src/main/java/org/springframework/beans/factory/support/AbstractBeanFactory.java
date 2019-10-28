@@ -241,18 +241,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
-				markBeanAsCreated(beanName);  //标记bean正在创建或者即将被创建
+				markBeanAsCreated(beanName);  //标记bean正在创建或者即将被创建,将beanName添加到alreadyCreated中,并从mergedBeanDefinitions中移除对应的bd
 			}
 
 			try {
-				// 根据名字获取合并过的对应的RootBeanDefinition
+				// 根据名字获取合并过的对应的RootBeanDefinition,首先从mergedBeanDefinitions中获取（这里肯定没有，上一步已移除，会从新创建一个RootBeanDefinition放入mergedBeanDefinitions中并返回）
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-				// 检查mbd是否为抽象的
+				// 检查mbd是否为抽象的，是则抛出异常
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
 				//这里比较重要，因为我们会有属性注入等等  所以这里就是要保证它依赖的那些属性先初始化才行
-				//这部分是处理循环依赖的核心 TODO
+				//这部分是处理循环依赖的核心 TODO 我们的service里通过注解注入的mapper不在dependsOn里
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
