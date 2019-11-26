@@ -489,30 +489,35 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
-			// 为刷新容器上下文做好准备
+			// 1.准备
+			// 为刷新容器上下文做好准备(比如记录启动时间、设置次应用上下文的关闭标志位为false、
+			// 是否活跃状态设置为true、验证当前环境变量的必填属性、将本地应用程序监听器重置为预刷新状态等)
+			// 这里的容器上下文我们可以理解为就是一个ApplicationContext对象,做准备就是设置改对象的属性和检查一些属性等
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
-			// 子类刷新内部bean factory
-			// #refreshBeanFactory() (子类实现的抽象方法) 刷新BeanFactory
-			// #getBeanFactory() (子类实现的抽象方法) 获取BeanFactory
+			// 2.实例化
+			// 这里我的理解就是拿到一个实例化的beanFactory对象，该beanFactory对象设置了些什么属性具体要根据子类实现的refreshBeanFactory()方法和getBeanFactory()方法
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			// 配置BeanFactory，以便在上下文中使用
+			// 3.初始化
+			// 配置bean工厂的标准上下文特征，例如他的类加载器和后置处理器
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
 				// 允许在上下文子类中对bean工厂进行后处理。
+				//在应用程序上下文的标准初始化之后修改它的内部bean工厂
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
 				// 调用上下文中注册为beans的factoryProcessor
+				//在这一步完成了class到BeanDifinition的转换
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
-				// 注册Bean创建时拦截的BeanPostProcessor
+				//注册bean的后置处理器（查找并注册所有实现了BeanPostProcessor接口的类并添加到beanFactory的beanPostProcessors集合中，在creatBean时会使用到）
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -650,7 +655,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * Configure the factory's standard context characteristics,
 	 * such as the context's ClassLoader and post-processors.
 	 *
-	 * 配置工厂的标准上下文特征
+	 * 配置工厂的标准上下文特征，例如他的类加载器和后置处理器
 	 *
 	 * @param beanFactory the BeanFactory to configure
 	 */
@@ -718,10 +723,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
-	 * Modify the application context's internal bean factory after its standard
-	 * initialization. All bean definitions will have been loaded, but no beans
-	 * will have been instantiated yet. This allows for registering special
-	 * BeanPostProcessors etc in certain ApplicationContext implementations.
+	 * Modify the application context's internal bean factory after its standard initialization.
+	 * All bean definitions will have been loaded, but no beans will have been instantiated yet.
+	 * This allows for registering special BeanPostProcessors etc in certain ApplicationContext implementations.
+	 * 在应用程序上下文的标准初始化之后修改它的内部bean工厂
+	 * 所有bean定义都已加载，但还没有实例化bean TODO 这条不是很懂
+	 * 这允许在特定的ApplicationContext实现中注册特殊的bean后置处理器等。
 	 * @param beanFactory the bean factory used by the application context
 	 */
 	protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
@@ -736,6 +743,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>一定在单例之前执行
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		//这行代码完成了class的扫描并转换为BeanDifinition,放在beanFactory的beanDifinitionMap中
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

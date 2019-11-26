@@ -1,0 +1,3 @@
+AspectJAutoProxyBeanDefinitionParser
+AnnotationAwareAspectJAutoProxyCreator
+AbstractAutoProxyCreator

@@ -167,16 +167,16 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-		Object singletonObject = this.singletonObjects.get(beanName);
-		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+		Object singletonObject = this.singletonObjects.get(beanName); //首先去一级缓存（也就是单例对象缓冲池）中取
+		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) { //一级缓存没取到并且当前bean正在创建中
 			synchronized (this.singletonObjects) {
-				singletonObject = this.earlySingletonObjects.get(beanName);
-				if (singletonObject == null && allowEarlyReference) {
-					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
+				singletonObject = this.earlySingletonObjects.get(beanName); //从三级缓存中取
+				if (singletonObject == null && allowEarlyReference) { //三级缓存没取到且允许循环引用
+					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); //从二级缓存中取，取到的是一个工厂对象
 					if (singletonFactory != null) {
-						singletonObject = singletonFactory.getObject();
-						this.earlySingletonObjects.put(beanName, singletonObject);
-						this.singletonFactories.remove(beanName);
+						singletonObject = singletonFactory.getObject(); //调用工厂方法拿到需要的实例对象
+						this.earlySingletonObjects.put(beanName, singletonObject); //把实例对象放到三级缓存中
+						this.singletonFactories.remove(beanName); //移除二级缓存中的工厂对象，下次get时可以直接从三级缓存中取，所以这里的工厂对象也没用了，移除好GC
 					}
 				}
 			}
@@ -215,6 +215,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 				try {
 					//3.通过getObject()返回示例对象
+					//实际会调用createBean()-->doCreateBean()
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}

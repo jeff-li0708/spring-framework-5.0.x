@@ -41,6 +41,8 @@ import org.springframework.beans.BeansException;
  * @since 06.07.2003
  * @see BeanPostProcessor
  * @see PropertyResourceConfigurer
+ *
+ * spring提供的bean工厂后置处理器接口，只要实现这个接口便是一个bean工厂后置处理器了
  */
 @FunctionalInterface
 public interface BeanFactoryPostProcessor {

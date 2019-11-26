@@ -485,10 +485,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
-			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName); //这里只有remove，在哪里put的呢？在上一步的后置处理器中
+			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);   //如果你bean指定需要通过factoryMethod来创建则会在这里被创建 //这里只有remove，在哪里put的呢？在上一步的后置处理器中
 		}
 		if (instanceWrapper == null) {
-			instanceWrapper = createBeanInstance(beanName, mbd, args); //这里会创建bean的实例，并将其封装为BeanWrapper对象
+			//createBeanInstance会解析beanName的构造方法，并利用反射创建一个beanName对应的对象（这个对象的需要setter方法注入的属性是没有值的）
+			// 然后将其封装为BeanWrapper对象返回
+			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		final Object bean = instanceWrapper.getWrappedInstance();
 		Class<?> beanType = instanceWrapper.getWrappedClass();
@@ -514,7 +516,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
 		//如果当前bean是单例，且支持循环依赖，且当前bean正在创建，通过往singletonFactories添加一个objectFactory，
-		//这样后期如果有其他bean依赖该bean 可以从singletonFactories获取到bean，getEarlyBeanReference可以对返回的bean进行修改，
+		//这样后期如果有其他bean依赖该bean 可以从singletonFactories获取到objectFactory，当调用objectFactory.getObject(),实际会调用getEarlyBeanReference返回bean
 		//这边目前除了可能会返回动态代理对象 其他的都是直接返回bean
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
@@ -523,6 +525,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			//在二级缓存singletonFactories中put一个lambda表达式，这个表达式里就包含了上面刚创建的对象，
+			// 也可以理解为put了一个objectFactory对象，而当我们需要这个对象的时候会通过objectFactory.getObject()也就是getEarlyBeanReference()这个方法获取到需要的对象
+			//这里为什么是put一个工厂而不是直接put上面创建的bean，因为有时候我们需要对里面的对象进行修改，返回动态代理对象
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 			//添加后单例对象缓冲池singletonObjects中是没有这个bean的
 		}
@@ -1175,6 +1180,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
 	 * @return a BeanWrapper for the new instance
+	 * 实例化给定的bean,使用默认的构造方法，最后将实例对象放进包裹类BeanWrapper中并返回
 	 */
 	protected BeanWrapper instantiateBean(final String beanName, final RootBeanDefinition mbd) {
 		try {

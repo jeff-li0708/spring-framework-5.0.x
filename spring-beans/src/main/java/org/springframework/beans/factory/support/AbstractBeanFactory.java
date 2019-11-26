@@ -104,7 +104,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final List<StringValueResolver> embeddedValueResolvers = new CopyOnWriteArrayList<>();
 
 	/** BeanPostProcessors to apply in createBean */
-	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
+	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();//所有的后置处理器，在createBean时会使用
 
 	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered */
 	private volatile boolean hasInstantiationAwareBeanPostProcessors;
@@ -252,7 +252,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Guarantee initialization of beans that the current bean depends on.
 				//这里比较重要，因为我们会有属性注入等等  所以这里就是要保证它依赖的那些属性先初始化才行
-				//这部分是处理循环依赖的核心 TODO 我们的service里通过注解注入的mapper不在dependsOn里
+				// TODO 我们的service里通过注解注入的mapper不在dependsOn里
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {

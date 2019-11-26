@@ -1068,7 +1068,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			Object instanceCandidate;
 
 			if (matchingBeans.size() > 1) {
-				autowiredBeanName = determineAutowireCandidate(matchingBeans, descriptor);//确定注入的候选者
+				autowiredBeanName = determineAutowireCandidate(matchingBeans, descriptor);//确定注入的候选者,首先找注解了@primary的，多个都配置了报错，然后根据优先级，最后根据字段名称
 				if (autowiredBeanName == null) {
 					if (isRequired(descriptor) || !indicatesMultipleBeans(type)) {
 						return descriptor.resolveNotUnique(type, matchingBeans);
