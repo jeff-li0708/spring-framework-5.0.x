@@ -199,7 +199,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
-		Object sharedInstance = getSingleton(beanName); //获取实例对象,可能是早期引用对象
+		Object sharedInstance = getSingleton(beanName); //获取实例对象,可能是早期单例对象（没完成属性注入的对象）
 		if (sharedInstance != null && args == null) {
 			if (logger.isDebugEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -217,7 +217,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
-			if (isPrototypeCurrentlyInCreation(beanName)) { //正在创建改实例，则抛出异常
+			if (isPrototypeCurrentlyInCreation(beanName)) { //判断当前初始化的beanName是不是正在创建原型bean集合当中
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
@@ -240,14 +240,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 			}
 
-			if (!typeCheckOnly) {
-				markBeanAsCreated(beanName);  //标记bean正在创建或者即将被创建,将beanName添加到alreadyCreated中,并从mergedBeanDefinitions中移除对应的bd
+			if (!typeCheckOnly) {//是否检查bean的类型，默认为false,所以这里取反为true
+				//标记bean已经创建或者即将被创建,
+				//也就是将beanName添加到set集合alreadyCreated中,并从mergedBeanDefinitions中移除对应的bd，删除是防止在创建过程中元数据发生变化
+				markBeanAsCreated(beanName);
 			}
 
 			try {
-				// 根据名字获取合并过的对应的RootBeanDefinition,首先从mergedBeanDefinitions中获取（这里肯定没有，上一步已移除，会从新创建一个RootBeanDefinition放入mergedBeanDefinitions中并返回）
+				// 根据名字获取合并过的对应的RootBeanDefinition,首先从mergedBeanDefinitions中获取（这里肯定没有，上一步已移除，会重新创建一个RootBeanDefinition放入mergedBeanDefinitions中并返回）
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-				// 检查mbd是否为抽象的，是则抛出异常
+				// 检查mbd是否为抽象的，是则抛出BeanIsAbstractException异常
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.

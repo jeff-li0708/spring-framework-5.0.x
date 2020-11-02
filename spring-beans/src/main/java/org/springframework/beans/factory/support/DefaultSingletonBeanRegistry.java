@@ -164,19 +164,24 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean to look for
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
+	 * 根据beanNane从缓存中获取单例对象
+	 * 获取逻辑先从一级缓存中获取，一级缓存就是一个map,key为beanName,value为初始化的单例对象（也就是完成了属性注入的对象），
+	 * 如果从一级缓存没获取到并且当前beanName正在创建，这从二级缓存中获取，一级缓存就是一个map,key为beanName,value是还未初始化的早期单例对象（也就是还没完成属性注入的对象），
+	 * 如果二级缓存也没获取到并且支持循环引用，则从三级缓存中获取，三级缓存是也一个map,key为beanName,而value为一个工厂对象（ObjectFactory），三级缓存中获取到的是一个工厂对象，
+	 * 接下来会调用工厂对象的getObject()方法，该方法会返回一个早期的单例对象，然后将该单例对象放入二级缓存中，并且删除三级缓存中的工厂对象
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		Object singletonObject = this.singletonObjects.get(beanName); //首先去一级缓存（也就是单例对象缓冲池）中取
-		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) { //一级缓存没取到并且当前bean正在创建中
+		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) { //一级缓存没取到并且当前bean正在创建中(beanName是否在set集合singletonsCurrentlyInCreation中)
 			synchronized (this.singletonObjects) {
-				singletonObject = this.earlySingletonObjects.get(beanName); //从三级缓存中取
-				if (singletonObject == null && allowEarlyReference) { //三级缓存没取到且允许循环引用
-					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); //从二级缓存中取，取到的是一个工厂对象
+				singletonObject = this.earlySingletonObjects.get(beanName); //从二级缓存中取
+				if (singletonObject == null && allowEarlyReference) { //二级缓存没取到且允许循环引用
+					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); //从三级缓存中取，取到的是一个工厂对象
 					if (singletonFactory != null) {
 						singletonObject = singletonFactory.getObject(); //调用工厂方法拿到需要的实例对象
-						this.earlySingletonObjects.put(beanName, singletonObject); //把实例对象放到三级缓存中
-						this.singletonFactories.remove(beanName); //移除二级缓存中的工厂对象，下次get时可以直接从三级缓存中取，所以这里的工厂对象也没用了，移除好GC
+						this.earlySingletonObjects.put(beanName, singletonObject); //把实例对象放到二级缓存中
+						this.singletonFactories.remove(beanName); //移除三级缓存中的工厂对象，下次get时可以直接从二级缓存中取，所以这里的工厂对象也没用了，移除好GC
 					}
 				}
 			}
@@ -195,7 +200,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
-			//1.尝试从单例对象的缓存池获取对象，有值直接返回
+			//1.尝试从一级缓存中获取对象，有值直接返回
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) { //当前在destroysingleton中，抛出异常
@@ -243,8 +248,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
-					/**5.将singletonObject放入单例对象缓冲池（singletonObjects）中，将beanName放入已注册的单例对象集合（registeredSingletons）中
-					 *	并从早期单例对象对象缓冲池（earlySingletonObjects）中移除，并从单例工厂的缓存池中移除beanName（添加是在调用singletonFactory.getObject()时，
+					/**5.将singletonObject放入一级缓存（singletonObjects）中，将beanName放入已注册的单例对象集合（registeredSingletons）中
+					 *	并从早期单例对象从二级缓存（earlySingletonObjects）中移除，并从单例工厂的缓存池中移除beanName（添加是在调用singletonFactory.getObject()时，
 					 *	在org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean()方法中添加的）
 					 */
 					addSingleton(beanName, singletonObject);
@@ -337,6 +342,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @see #isSingletonCurrentlyInCreation
 	 */
 	protected void beforeSingletonCreation(String beanName) {
+		//this.inCreationCheckExclusions.contains(beanName)这里是判断当前需要创建的bean是否在Exclusions集合，
+		//被排除的bean，程序员可以提供一些bean不被spring初始化（哪怕被扫描到了，也不初始化），那么这些提供的bean便会存在这个集合当中；
+		//一般情况下我们不会提供，而且与循环依赖无关；
 		if (!this.inCreationCheckExclusions.contains(beanName) && !this.singletonsCurrentlyInCreation.add(beanName)) {
 			throw new BeanCurrentlyInCreationException(beanName);
 		}
