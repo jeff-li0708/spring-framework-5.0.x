@@ -280,12 +280,16 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 		// If the transaction attribute is null, the method is non-transactional.
 		TransactionAttributeSource tas = getTransactionAttributeSource();
+		//拿到事务属性TransactionAttribute ：我们使用注解@Transactional时，注解元信息会被包装成TransactionAttribute ，此处拿到的就是@Transactional的元数据
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
+		//找到一个合适的事务管理器,以集成了DataSourceTransactionManager为例。determineTransactionManager返回的就是DataSourceTransactionManager对象。
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
+		//获取目标方法的全名
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
+			//开启事物
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 
 			Object retVal;
@@ -460,6 +464,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			@Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
 
 		// If no name specified, apply method identification as transaction name.
+		//如果未指定名称，则将方法标识应用为事务名称。
 		if (txAttr != null && txAttr.getName() == null) {
 			txAttr = new DelegatingTransactionAttribute(txAttr) {
 				@Override
@@ -472,7 +477,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionStatus status = null;
 		if (txAttr != null) {
 			if (tm != null) {
-				status = tm.getTransaction(txAttr);
+				status = tm.getTransaction(txAttr);//获取TransactionStatus事务
 			}
 			else {
 				if (logger.isDebugEnabled()) {
@@ -481,6 +486,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				}
 			}
 		}
+		//封装一个TransactionInfo
 		return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
 	}
 

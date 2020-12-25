@@ -336,6 +336,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @see #doGetTransaction
 	 * @see #isExistingTransaction
 	 * @see #doBegin
+	 * 模板方法，要看具体的PlatformTransactionManager实现类，比如DataSourceTransactionManager
 	 */
 	@Override
 	public final TransactionStatus getTransaction(@Nullable TransactionDefinition definition) throws TransactionException {
