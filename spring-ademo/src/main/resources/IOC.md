@@ -31,15 +31,16 @@ spring实例化所有单例对象（非lazy-init）
 1.org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons                   
 2.    org.springframework.beans.factory.support.AbstractBeanFactory.getBean(java.lang.String)                     
 3.        org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean 
-4.          org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>) 
-5.              org.springframework.beans.factory.ObjectFactory.getObject 
+4.          org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(String, ObjectFactory<?>) 
+5.              org.springframework.beans.factory.ObjectFactory.getObject
 6.                  org.springframework.beans.factory.support.AbstractBeanFactory.createBean
 7.          org.springframework.beans.factory.support.AbstractBeanFactory.createBean
 8.              org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.resolveBeforeInstantiation
 9.              org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean
 10.                 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance
 11.                 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean
-    
+ 
+getBean()-->doGetBean()-->getSingleton()-->ObjectFactory.getObject()-createBean()-->doCreateBean()-->createBeanInstance()
 1.遍历beanDefinitionNames依次调用getBean(beanName)创建beanName对应的实例,遍历时判断是否是抽象类、是否单例、是否非LazyInit，
 对于是FactoryBean的类，在调用getBean(beanName)前会在beanName前加&前缀
 2.getBean(beanName)直接调用doGetBean(name, null, null, false)方法

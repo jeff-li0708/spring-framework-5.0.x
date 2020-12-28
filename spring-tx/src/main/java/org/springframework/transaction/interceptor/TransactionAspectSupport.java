@@ -280,36 +280,41 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 		// If the transaction attribute is null, the method is non-transactional.
 		TransactionAttributeSource tas = getTransactionAttributeSource();
-		//拿到事务属性TransactionAttribute ：我们使用注解@Transactional时，注解元信息会被包装成TransactionAttribute ，此处拿到的就是@Transactional的元数据
+		//1.拿到事务属性TransactionAttribute ：我们使用注解@Transactional时，注解元信息会被包装成TransactionAttribute ，此处拿到的就是@Transactional的元数据
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
-		//找到一个合适的事务管理器,以集成了DataSourceTransactionManager为例。determineTransactionManager返回的就是DataSourceTransactionManager对象。
+		//2.找到一个合适的事务管理器,以集成了DataSourceTransactionManager为例。determineTransactionManager返回的就是DataSourceTransactionManager对象。
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
-		//获取目标方法的全名
+		//3.获取目标方法的全名
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
+		//申明式事务处理
 		if (txAttr == null || !(tm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
-			//开启事物
+			//4.开启事物
 			TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
 
 			Object retVal;
 			try {
 				// This is an around advice: Invoke the next interceptor in the chain.
 				// This will normally result in a target object being invoked.
+				//5.执行下一个增强。在没其他增强的情况下，这通常会导致调用目标对象。
 				retVal = invocation.proceedWithInvocation();
 			}
 			catch (Throwable ex) {
 				// target invocation exception
+				//6.异常-回滚事务
 				completeTransactionAfterThrowing(txInfo, ex);
 				throw ex;
 			}
 			finally {
+				//7.清除事务信息。 其实就是把ThreadLocal transactionInfoHolder里的新事务信息清除掉。设置为原事务信息
 				cleanupTransactionInfo(txInfo);
 			}
+			//8.提交事务
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
-
+		//编程式事务处理(CallbackPreferringPlatformTransactionManager) 不做重点分析
 		else {
 			final ThrowableHolder throwableHolder = new ThrowableHolder();
 

@@ -340,18 +340,20 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 */
 	@Override
 	public final TransactionStatus getTransaction(@Nullable TransactionDefinition definition) throws TransactionException {
-		Object transaction = doGetTransaction();
+		//1.尝试获取事务对象，并封装当前线程中以当前datasource为key的Connection。
+		Object transaction = doGetTransaction();//获取事务
 
 		// Cache debug flag to avoid repeated checks.
 		boolean debugEnabled = logger.isDebugEnabled();
-
+		//2.没有配置事务属性，则创建一个默认的事务属性
 		if (definition == null) {
 			// Use defaults if no transaction definition given.
 			definition = new DefaultTransactionDefinition();
 		}
-
+		//3.判断是否有已经存在是否：判断条件是当前线程有Connection.并且Connection是活跃的
 		if (isExistingTransaction(transaction)) {
 			// Existing transaction found -> check propagation behavior to find out how to behave.
+			//已存在事务，则处理传播属性，然后返回。(处理两个事务之间的传播属性关系)
 			return handleExistingTransaction(definition, transaction, debugEnabled);
 		}
 

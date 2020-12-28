@@ -150,7 +150,7 @@ public abstract class TransactionSynchronizationManager {
 	 */
 	@Nullable
 	private static Object doGetResource(Object actualKey) {
-		Map<Object, Object> map = resources.get();
+		Map<Object, Object> map = resources.get();//这里只有获取，添加是在下面的bindResource方法中
 		if (map == null) {
 			return null;
 		}
