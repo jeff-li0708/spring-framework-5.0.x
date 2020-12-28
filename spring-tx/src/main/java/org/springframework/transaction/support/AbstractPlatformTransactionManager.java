@@ -350,7 +350,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			// Use defaults if no transaction definition given.
 			definition = new DefaultTransactionDefinition();
 		}
-		//3.判断是否有已经存在是否：判断条件是当前线程有Connection.并且Connection是活跃的
+		//3.判断是否有已经存在是否：判断条件是当前线程有Connection.并且Connection是活跃的，默认是false,DataSourceTransactionManager有自己的实现
 		if (isExistingTransaction(transaction)) {
 			// Existing transaction found -> check propagation behavior to find out how to behave.
 			//已存在事务，则处理传播属性，然后返回。(处理两个事务之间的传播属性关系)
@@ -358,11 +358,14 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 		}
 
 		// Check definition settings for new transaction.
+		//4.校验超时
 		if (definition.getTimeout() < TransactionDefinition.TIMEOUT_DEFAULT) {
 			throw new InvalidTimeoutException("Invalid transaction timeout", definition.getTimeout());
 		}
 
 		// No existing transaction found -> check propagation behavior to find out how to proceed.
+		//5.处理当前没有事务的情况
+		//5.1当前没事务，事务的传播机制配置的是mandatory，抛出异常
 		if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_MANDATORY) {
 			throw new IllegalTransactionStateException(
 					"No existing transaction found for transaction marked with propagation 'mandatory'");
