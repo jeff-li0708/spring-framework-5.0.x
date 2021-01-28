@@ -259,12 +259,15 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		Connection con = null;
 
 		try {
+			//当前没有连接持有者或者当前连接是同步事务，获取一个新连接
 			if (!txObject.hasConnectionHolder() ||
 					txObject.getConnectionHolder().isSynchronizedWithTransaction()) {
+
 				Connection newCon = obtainDataSource().getConnection();
 				if (logger.isDebugEnabled()) {
 					logger.debug("Acquired Connection [" + newCon + "] for JDBC transaction");
 				}
+				//封装连接
 				txObject.setConnectionHolder(new ConnectionHolder(newCon), true);
 			}
 
@@ -277,23 +280,24 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
 			// so we don't want to do it unnecessarily (for example if we've explicitly
 			// configured the connection pool to set it already).
-			if (con.getAutoCommit()) {
+			if (con.getAutoCommit()) { //默认是自动提交
 				txObject.setMustRestoreAutoCommit(true);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Switching JDBC Connection [" + con + "] to manual commit");
 				}
-				con.setAutoCommit(false);
+				con.setAutoCommit(false);//关闭自动提交
 			}
 
 			prepareTransactionalConnection(con, definition);
-			txObject.getConnectionHolder().setTransactionActive(true);
+			txObject.getConnectionHolder().setTransactionActive(true);//设置事务是活跃的
 
 			int timeout = determineTimeout(definition);
-			if (timeout != TransactionDefinition.TIMEOUT_DEFAULT) {
+			if (timeout != TransactionDefinition.TIMEOUT_DEFAULT) { //配置了事务的超时时间则设置超时时间
 				txObject.getConnectionHolder().setTimeoutInSeconds(timeout);
 			}
 
 			// Bind the connection holder to the thread.
+			//将连接绑定到当前线程
 			if (txObject.isNewConnectionHolder()) {
 				TransactionSynchronizationManager.bindResource(obtainDataSource(), txObject.getConnectionHolder());
 			}
