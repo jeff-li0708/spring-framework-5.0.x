@@ -80,7 +80,8 @@ final class PostProcessorRegistrationDelegate {
 			}
 			sortPostProcessors(currentRegistryProcessors, beanFactory); //这里就是根据order的大小排序
 			registryProcessors.addAll(currentRegistryProcessors);
-			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry); //调用后置处理方法，这里调用ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry后完成了beanDifinition的扫描解析注册
+			//调用后置处理方法，这里调用ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry后完成了beanDifinition的扫描解析注册
+			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
