@@ -40,6 +40,7 @@ public class InfrastructureAdvisorAutoProxyCreator extends AbstractAdvisorAutoPr
 		this.beanFactory = beanFactory;
 	}
 
+	//isEligibleAdvisorBean方法在aop中是用来判断 切面是否合格的，这里判断了beanDefinition的role属性是否为BeanDefinition.ROLE_INFRASTRUCTURE
 	@Override
 	protected boolean isEligibleAdvisorBean(String beanName) {
 		return (this.beanFactory != null && this.beanFactory.containsBeanDefinition(beanName) &&

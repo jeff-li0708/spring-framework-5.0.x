@@ -35,6 +35,7 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
  *
  * @author Juergen Hoeller
  * @since 2.5
+ * 事务注解解析器，主要是解析@Transactional注解上的属性，并且封装到RuleBasedTransactionAttribute对象中。
  */
 @SuppressWarnings("serial")
 public class SpringTransactionAnnotationParser implements TransactionAnnotationParser, Serializable {

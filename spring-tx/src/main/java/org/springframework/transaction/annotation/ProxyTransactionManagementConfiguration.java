@@ -33,6 +33,10 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
  * @since 3.1
  * @see EnableTransactionManagement
  * @see TransactionManagementConfigurationSelector
+ * 这是一个配置类，主要定义了BeanFactoryTransactionAttributeSourceAdvisor、TransactionAttributeSource 和 TransactionInterceptor 三个bean，
+ * BeanFactoryTransactionAttributeSourceAdvisor包含了TransactionAttributeSource 和 TransactionInterceptor
+ * 如果大家熟悉spring的aop的话，肯定知道一般切面advisor由pointcut 和 advice 组成。
+ * 而TransactionInterceptor实现了Advice接口
  */
 @Configuration
 public class ProxyTransactionManagementConfiguration extends AbstractTransactionManagementConfiguration {

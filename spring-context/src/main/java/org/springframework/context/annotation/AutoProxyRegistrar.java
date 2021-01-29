@@ -56,28 +56,33 @@ public class AutoProxyRegistrar implements ImportBeanDefinitionRegistrar {
 	 */
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-		boolean candidateFound = false;
+		boolean candidateFound = false;//是否找到对应的候选人
+		//获取配置类上的所有注解类型
 		Set<String> annTypes = importingClassMetadata.getAnnotationTypes();
 		for (String annType : annTypes) {
+			//获取对应的注解信息
 			AnnotationAttributes candidate = AnnotationConfigUtils.attributesFor(importingClassMetadata, annType);
 			if (candidate == null) {
 				continue;
 			}
+			//获取注解的mode值，对于@EnableTransactionManagement，默认是PROXY
 			Object mode = candidate.get("mode");
+			//获取注解的proxyTargetClass，对于@EnableTransactionManagement，默认是false
 			Object proxyTargetClass = candidate.get("proxyTargetClass");
 			if (mode != null && proxyTargetClass != null && AdviceMode.class == mode.getClass() &&
 					Boolean.class == proxyTargetClass.getClass()) {
 				candidateFound = true;
 				if (mode == AdviceMode.PROXY) {
+					//注册一个自动代理创建器
 					AopConfigUtils.registerAutoProxyCreatorIfNecessary(registry);
-					if ((Boolean) proxyTargetClass) {
+					if ((Boolean) proxyTargetClass) {//如果为true,也就是使用CGLIB代理
 						AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
 						return;
 					}
 				}
 			}
 		}
-		if (!candidateFound && logger.isWarnEnabled()) {
+		if (!candidateFound && logger.isWarnEnabled()) {//没找到候选人，打印日志
 			String name = getClass().getSimpleName();
 			logger.warn(String.format("%s was imported but no annotations were found " +
 					"having both 'mode' and 'proxyTargetClass' attributes of type " +
